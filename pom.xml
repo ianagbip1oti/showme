@@ -7,8 +7,8 @@
   <properties>
     <lib.smalld.version>0.2.3</lib.smalld.version>
     <lib.disparse.version>master-SNAPSHOT</lib.disparse.version>
+    <lib.gson.version>2.8.6</lib.gson.version>
     <lib.slf4j.version>1.7.25</lib.slf4j.version>
-    <lib.immutables.version>2.8.2</lib.immutables.version>
     <plugin.exec.version>1.6.0</plugin.exec.version>
     <plugin.shade.version>3.2.2</plugin.shade.version>
 
@@ -41,10 +41,9 @@
       <version>${lib.slf4j.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.immutables</groupId>
-      <artifactId>value</artifactId>
-      <version>${lib.immutables.version}</version>
-      <scope>provided</scope>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>${lib.gson.version}</version>
     </dependency>
   </dependencies>
 
