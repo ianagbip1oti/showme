@@ -13,7 +13,11 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -29,6 +33,8 @@ public class ShowMe implements Consumer<SmallD> {
 
   /** Optionally restrict to the given channel id */
   private static final String CHANNEL_ID = System.getenv("SHOWME_CHANNEL_ID");
+
+  private static final Cooldown COOLDOWN = new Cooldown();
 
   @CommandHandler(
     commandName = "showme",
@@ -61,7 +67,17 @@ public class ShowMe implements Consumer<SmallD> {
 
     if (!Files.isDirectory(folder)) {
       LOG.warn("Request for images that don't exist: " + ofWhat);
-      return
+      return;
+    }
+
+    if (!COOLDOWN.acquire(ofWhat)) {
+      LOG.warn("Requested within cooldown: " + ofWhat);
+
+      evt.getSmalld().post(
+        "/channels/" + channelId + "/messages",
+        message("You can't do that again... yet"));
+
+      return;
     }
 
     List<Path> images =
@@ -99,5 +115,29 @@ public class ShowMe implements Consumer<SmallD> {
     SmallD.run(System.getenv("SHOWME_TOKEN"), new ShowMe());
   }
 
+  private static class Cooldown {
+
+    private static final Duration COOLDOWN =
+      Optional.ofNullable(System.getenv("SHOWME_COOLDOWN")).map(Duration::parse).orElse(null);
+
+    private final Map<String, Instant> cooldowns = new HashMap<>();
+
+
+    public boolean acquire(String name) {
+      if (COOLDOWN == null) {
+        return true;
+      }
+
+      Instant now = Instant.now();
+
+      if (cooldowns.containsKey(name) && now.isBefore(cooldowns.get(name))) {
+        return false;
+      }
+
+      cooldowns.put(name, now.plus(COOLDOWN));
+
+      return true;
+    }
+  }
 }
 
